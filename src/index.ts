@@ -13,7 +13,7 @@ app.get("/", (_req, res) => {
   res.send("Hello World");
 });
 
-app.use("/webhooks", webhookRouter);
+app.use("/verification", webhookRouter);
 
 app.use(errorHandler);
 
