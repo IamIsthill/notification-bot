@@ -1,0 +1,56 @@
+name: Build and Deploy to Staging Branch
+
+permissions:
+  contents: write
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+
+      # Install dependencies for building the app
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Typescript
+        run: npm run build
+
+      # Remove previous dependencies, and install the prod dependencies
+      - name: Reinstall production dependencies
+        run: |
+          rm -rf node_modules
+          npm ci --only=production
+
+      - name: Prepare output folder
+        run: rm -rf output && mkdir output
+
+      - name: Copy necessary files
+        run: |
+          cp -r node_modules output/
+          cp -r dist output/
+          cp package*.json output/
+
+      - name: Push to deploy staging branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd output
+          git init
+          git config user.name "Github Actions"
+          git config user.email "actions@github.com"
+          git remote add origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}
+          git checkout -b deploy-main
+          git add .
+          git commit -m "Deploy build from ${{ github.sha }}"
+          git push --force origin deploy-main
