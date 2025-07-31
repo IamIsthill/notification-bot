@@ -7,6 +7,7 @@ import { errorHandler } from "./middleware/error-handler";
 import webhookRouter from "./routes/webhook.routes";
 
 const app = express();
+app.use(express.json());
 
 app.get("/", (_req, res) => {
   res.send("Hello World");
